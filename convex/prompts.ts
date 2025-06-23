@@ -132,10 +132,22 @@ export const savePrompt = mutation({
     category: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
+    const clerkUserId = await getCurrentUserId(ctx);
+
+    // Find the user document by Clerk ID to get the Convex user ID
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error(
+        "User not found in Convex 'users' table. Please ensure storeUser has been called."
+      );
+    }
 
     return await ctx.db.insert("prompts", {
-      userId,
+      userId: user._id, // Use the Convex user ID (_id from the users table)
       title: args.title,
       userInput: args.userInput,
       generatedPrompt: args.generatedPrompt,
@@ -147,11 +159,24 @@ export const savePrompt = mutation({
 export const getUserPrompts = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getCurrentUserId(ctx);
+    const clerkUserId = await getCurrentUserId(ctx);
 
+    // Find the user document by Clerk ID to get the Convex user ID
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      // If the user is not found in the users table, they cannot have any prompts.
+      // This might happen if storeUser hasn't completed yet for a new user.
+      return [];
+    }
+
+    // Now query prompts using the Convex user ID (_id from the users table)
     return await ctx.db
       .query("prompts")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .order("desc")
       .collect();
   },
