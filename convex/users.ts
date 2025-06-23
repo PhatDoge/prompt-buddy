@@ -1,6 +1,7 @@
 import { ConvexError } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { getClerkIdentity, getClerkUser } from "./auth"; // Assuming auth.ts is in the same directory
+import { v } from "convex/values";
 
 /**
  * Stores a new user from Clerk into the Convex database or updates existing user.
@@ -118,5 +119,80 @@ export const getMyUserDoc = query({
     // getClerkUser already handles the logic of finding the user by Clerk ID
     // and throws an error if not found or not authenticated.
     return await getClerkUser(ctx);
+  },
+});
+
+/**
+ * INTERNAL MUTATION: Creates or updates a user from a Clerk webhook.
+ *
+ * This mutation is called by an HTTP action when Clerk sends a "user.created"
+ * or "user.updated" webhook event. It takes user data directly as arguments.
+ */
+export const internalCreateUser = internalMutation({
+  args: {
+    clerkId: v.string(),
+    email: v.string(), // Assuming email is always present from webhook
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Check if user already exists
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .unique();
+
+    if (existingUser) {
+      // User exists, update their information if necessary
+      const updatedFields: Partial<typeof existingUser> = {};
+      if (args.email && existingUser.email !== args.email) {
+        updatedFields.email = args.email;
+      }
+      if (args.firstName && existingUser.firstName !== args.firstName) {
+        updatedFields.firstName = args.firstName;
+      } else if (
+        args.firstName === undefined &&
+        existingUser.firstName !== undefined
+      ) {
+        updatedFields.firstName = undefined; // Handle case where name is removed
+      }
+      if (args.lastName && existingUser.lastName !== args.lastName) {
+        updatedFields.lastName = args.lastName;
+      } else if (
+        args.lastName === undefined &&
+        existingUser.lastName !== undefined
+      ) {
+        updatedFields.lastName = undefined; // Handle case where name is removed
+      }
+      if (args.imageUrl && existingUser.imageUrl !== args.imageUrl) {
+        updatedFields.imageUrl = args.imageUrl;
+      } else if (
+        args.imageUrl === undefined &&
+        existingUser.imageUrl !== undefined
+      ) {
+        updatedFields.imageUrl = undefined; // Handle case where image is removed
+      }
+
+      if (Object.keys(updatedFields).length > 0) {
+        await ctx.db.patch(existingUser._id, updatedFields);
+      }
+      return existingUser._id;
+    } else {
+      // User doesn't exist, create new user
+      if (!args.email) {
+        // Should not happen if webhook sends email, but good to guard
+        throw new ConvexError("User email is missing from webhook data.");
+      }
+      const userId = await ctx.db.insert("users", {
+        clerkId: args.clerkId,
+        email: args.email,
+        firstName: args.firstName,
+        lastName: args.lastName,
+        imageUrl: args.imageUrl,
+        createdAt: Date.now(),
+      });
+      return userId;
+    }
   },
 });

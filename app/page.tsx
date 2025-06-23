@@ -1,20 +1,22 @@
 "use client";
 import { SignInForm } from "@/components/SignInForm";
 import { SignedIn, SignedOut, SignOutButton, useUser } from "@clerk/nextjs";
-import { useState } from "react";
 import {
-  Sparkles,
-  History,
-  Zap,
   Brain,
-  Wand2,
-  User,
+  History,
   LogOut,
   Rocket,
+  Sparkles,
   Stars,
-  ArrowRight,
-  ChevronRight,
+  User,
+  Wand2,
+  Zap,
 } from "lucide-react";
+import { useState } from "react";
+// Import the PromptGenerator and PromptHistory components
+import { PromptGenerator } from "@/components/PromptGenerator";
+import { PromptHistory } from "@/components/PromptHistory";
+// import { PromptHistory } from "@/components/PromptHistory";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<"generator" | "history">(
@@ -29,7 +31,7 @@ export default function App() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-indigo-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <header className="relative  top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-lg">
+      <header className="relative top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="relative w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -235,49 +237,13 @@ function Content({ activeTab }: { activeTab: "generator" | "history" }) {
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 min-h-[600px]">
-          {activeTab === "generator" ?
-            <div className="p-8">
-              <div className="text-center py-20">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <Wand2 className="w-8 h-8 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                  Prompt Generator
-                </h2>
-                <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                  Your PromptGenerator component will be integrated here to
-                  create amazing AI prompts
-                </p>
-                <div className="inline-flex items-center gap-2 px-6 py-3 bg-blue-50 text-blue-700 rounded-lg font-medium">
-                  <Sparkles className="w-4 h-4" />
-                  Coming Soon
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </div>
-            </div>
-          : <div className="p-8">
-              <div className="text-center py-20">
-                <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <History className="w-8 h-8 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                  Prompt History
-                </h2>
-                <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                  Your PromptHistory component will be integrated here to manage
-                  your saved prompts
-                </p>
-                <div className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-50 text-indigo-700 rounded-lg font-medium">
-                  <History className="w-4 h-4" />
-                  Coming Soon
-                  <ChevronRight className="w-4 h-4" />
-                </div>
-              </div>
-            </div>
-          }
-        </div>
+        {/* Main Content Area - UPDATED SECTION */}
+        {activeTab === "generator" ?
+          <PromptGenerator />
+        : <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-8">
+            <PromptHistory />
+          </div>
+        }
       </SignedIn>
     </div>
   );

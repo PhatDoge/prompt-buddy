@@ -28,24 +28,41 @@ http.route({
 
       switch (result.type) {
         case "user.created":
-          // Try this first
-          await ctx.runMutation(internal.users.createUser, {
-            clerkId: result.data.id,
-            email: result.data.email_addresses[0]?.email_address || "",
-            firstName: result.data.first_name || undefined,
-            lastName: result.data.last_name || undefined,
-            imageUrl: result.data.image_url || undefined,
-          });
+        case "user.updated": // Also handle user.updated events
+          const eventData = result.data;
+          const emailAddress = eventData.email_addresses?.find(
+            (email) => email.id === eventData.primary_email_address_id
+          )?.email_address;
 
-          // Alternative if internal.users doesn't work:
-          // await createUser(ctx, {
-          //   clerkId: result.data.id,
-          //   email: result.data.email_addresses[0]?.email_address || "",
-          //   firstName: result.data.first_name || undefined,
-          //   lastName: result.data.last_name || undefined,
-          //   imageUrl: result.data.image_url || undefined,
-          // });
+          if (!emailAddress) {
+            console.warn(
+              `Webhook Error: Primary email not found for user ${eventData.id}. Skipping user creation/update.`
+            );
+            // Optionally, you could decide to proceed without email or use another email if available,
+            // but primary email is generally expected.
+            // Consider throwing an error or returning a specific response if email is critical.
+            return new Response("Webhook Error: Primary email not found", {
+              status: 400,
+            });
+          }
+
+          await ctx.runMutation(internal.users.internalCreateUser, {
+            clerkId: eventData.id,
+            email: emailAddress,
+            firstName: eventData.first_name || undefined,
+            lastName: eventData.last_name || undefined,
+            imageUrl: eventData.image_url || undefined,
+          });
           break;
+
+        // Handle user deletion if necessary
+        // case "user.deleted":
+        //   // Ensure this event is idempotent and handles cases where the user might already be deleted.
+        //   // You'll need a corresponding internalMutation to delete the user by clerkId.
+        //   if (result.data.id) {
+        //     // Example: await ctx.runMutation(internal.users.internalDeleteUser, { clerkId: result.data.id });
+        //   }
+        //   break;
 
         case "organizationMembership.updated":
         case "organizationMembership.created":
