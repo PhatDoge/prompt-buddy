@@ -9,22 +9,42 @@ import {
   Users,
   BotMessageSquare,
   History as HistoryIcon,
-} from "lucide-react"; // Added HistoryIcon
+} from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
+// navItems will be mapped with translated labels inside the component
+const baseNavItems = [
+  { href: "/dashboard", labelKey: "sidebarDashboard" as const, icon: Home },
   {
     href: "/dashboard/create-prompt",
-    label: "Create Prompt",
+    labelKey: "sidebarCreatePrompt" as const,
     icon: PlusSquare,
   },
-  { href: "/dashboard/history", label: "History", icon: HistoryIcon },
-  { href: "/dashboard/favorites", label: "Favorites", icon: Star },
-  { href: "/dashboard/community", label: "Community", icon: Users },
+  {
+    href: "/dashboard/history",
+    labelKey: "sidebarHistory" as const,
+    icon: HistoryIcon,
+  },
+  {
+    href: "/dashboard/favorites",
+    labelKey: "sidebarFavorites" as const,
+    icon: Star,
+  },
+  {
+    href: "/dashboard/community",
+    labelKey: "sidebarCommunity" as const,
+    icon: Users,
+  },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { translate } = useLanguage(); // Added
+
+  const navItems = baseNavItems.map((item) => ({
+    ...item,
+    label: translate(item.labelKey),
+  }));
 
   return (
     <aside className="w-64 bg-gray-50 border-r border-gray-200 flex flex-col fixed h-full">
@@ -35,7 +55,7 @@ export function Sidebar() {
           </div>
           <div>
             <h2 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-              AI Prompt Studio
+              {translate("appConfigName")} {/* Reusing existing key */}
             </h2>
           </div>
         </Link>
@@ -47,7 +67,7 @@ export function Sidebar() {
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
           return (
             <Link
-              key={item.label}
+              key={item.labelKey} // Use labelKey for a stable key
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 group
                 ${
@@ -67,7 +87,7 @@ export function Sidebar() {
       <div className="p-4 border-t border-gray-200">
         {/* User profile section or sign out can go here */}
         <p className="text-xs text-gray-500 text-center">
-          © 2024 Prompt Studio
+          {translate("sidebarCopyright", { year: new Date().getFullYear() })}
         </p>
       </div>
     </aside>

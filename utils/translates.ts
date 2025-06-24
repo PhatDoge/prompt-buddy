@@ -182,12 +182,19 @@ export const translations = {
       "Start adding prompts to your favorites to see them here!",
     // History Page
     promptHistoryTitle: "Prompt History",
-    // Sidebar & General Dashboard
-    dashboardHome: "Dashboard Home",
-    community: "Community",
-    createPrompt: "Create Prompt",
-    favorites: "Favorites",
-    history: "History", // Already present, good.
+    // Sidebar
+    sidebarDashboard: "Dashboard",
+    sidebarCreatePrompt: "Create Prompt",
+    sidebarHistory: "History",
+    sidebarFavorites: "Favorites",
+    sidebarCommunity: "Community",
+    sidebarCopyright: "© {year} Prompt Studio", // {year} will be interpolated
+    // Sidebar & General Dashboard (some might be duplicates if page titles match sidebar links)
+    dashboardHome: "Dashboard Home", // Page title for /dashboard
+    // community: "Community", // Covered by sidebarCommunity if page title is the same
+    // createPrompt: "Create Prompt", // Covered by sidebarCreatePrompt if page title is the same
+    // favorites: "Favorites", // Covered by sidebarFavorites if page title is the same
+    // history: "History", // Covered by sidebarHistory if page title is the same
     // Generic
     greeting: "Hello",
   },
@@ -365,12 +372,20 @@ export const translations = {
       "¡Empieza a añadir prompts a tus favoritos para verlos aquí!",
     // History Page
     promptHistoryTitle: "Historial de Prompts",
-    // Sidebar & General Dashboard
+    // Sidebar
+    sidebarDashboard: "Panel",
+    sidebarCreatePrompt: "Crear Prompt",
+    sidebarHistory: "Historial",
+    sidebarFavorites: "Favoritos",
+    sidebarCommunity: "Comunidad",
+    sidebarCopyright: "© {year} Estudio de Prompts", // Matches the key used in Sidebar.tsx
+    // Sidebar & General Dashboard (some might be duplicates if page titles match sidebar links)
+    // dashboardHome key is for the main page title for /dashboard, distinct from sidebarDashboard
     dashboardHome: "Inicio del Panel",
-    community: "Comunidad",
-    createPrompt: "Crear Prompt",
-    favorites: "Favoritos",
-    history: "Historial", // Already present
+    // community: "Comunidad", // Covered by sidebarCommunity for sidebar, page might have its own title key
+    // createPrompt: "Crear Prompt", // Covered by sidebarCreatePrompt for sidebar
+    // favorites: "Favoritos", // Covered by sidebarFavorites for sidebar
+    // history: "Historial", // Covered by sidebarHistory for sidebar
     // Generic
     greeting: "Hola",
   },
