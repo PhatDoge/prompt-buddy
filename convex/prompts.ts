@@ -9,10 +9,11 @@ const openai = new OpenAI({
 });
 
 // Helper function to get current user ID from Clerk
-async function getCurrentUserId(ctx: any) {
+async function getCurrentUserId(ctx: any): Promise<string | null> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) {
-    throw new Error("User must be authenticated");
+    // Return null instead of throwing an error
+    return null;
   }
   return identity.subject;
 }
@@ -35,6 +36,12 @@ export const generatePrompt = action({
   handler: async (ctx, args) => {
     // Get authenticated user ID from Clerk
     const userId = await getCurrentUserId(ctx);
+    if (!userId) {
+      // Handle the case where the user is not authenticated, if necessary for this action
+      // For generatePrompt, it's probably best to throw an error or return a specific error state
+      // as this action likely requires an authenticated user to save the prompt.
+      throw new Error("User must be authenticated to generate a prompt.");
+    }
 
     const systemPrompt = `You are an expert prompt engineer with deep knowledge of AI systems and prompt optimization. Your task is to create precise, robust, and highly effective prompts that will produce consistent, high-quality results from AI agents.
 
@@ -134,6 +141,10 @@ export const savePrompt = mutation({
   handler: async (ctx, args) => {
     const clerkUserId = await getCurrentUserId(ctx);
 
+    if (!clerkUserId) {
+      throw new Error("User must be authenticated to save a prompt.");
+    }
+
     // Find the user document by Clerk ID to get the Convex user ID
     const user = await ctx.db
       .query("users")
@@ -161,6 +172,11 @@ export const getUserPrompts = query({
   handler: async (ctx) => {
     const clerkUserId = await getCurrentUserId(ctx);
 
+    if (!clerkUserId) {
+      // If there's no user ID, they can't have any prompts.
+      return [];
+    }
+
     // Find the user document by Clerk ID to get the Convex user ID
     const user = await ctx.db
       .query("users")
@@ -185,10 +201,25 @@ export const getUserPrompts = query({
 export const deletePrompt = mutation({
   args: { promptId: v.id("prompts") },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
+    const clerkUserId = await getCurrentUserId(ctx); // Changed from userId to clerkUserId for consistency with other mutations
+    if (!clerkUserId) {
+      throw new Error("User must be authenticated to delete a prompt.");
+    }
+
+    // It's generally better to check ownership against the Convex user._id if available,
+    // but if prompts are stored with clerkUserId directly, this is fine.
+    // Assuming prompts store Convex user._id based on savePrompt logic.
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+    if (!user) {
+      throw new Error("User not found.");
+    }
 
     const prompt = await ctx.db.get(args.promptId);
-    if (!prompt || prompt.userId !== userId) {
+    if (!prompt || prompt.userId !== user._id) {
+      // Check against Convex user._id
       throw new Error("Prompt not found or unauthorized");
     }
 
@@ -203,6 +234,10 @@ export const ratePrompt = mutation({
   },
   handler: async (ctx, args) => {
     const clerkUserId = await getCurrentUserId(ctx);
+
+    if (!clerkUserId) {
+      throw new Error("User must be authenticated to rate a prompt.");
+    }
 
     // Find the user document by Clerk ID to get the Convex user ID
     const user = await ctx.db
@@ -230,6 +265,15 @@ export const getTotalPromptsCreated = query({
   args: {},
   handler: async (ctx) => {
     const clerkUserId = await getCurrentUserId(ctx);
+
+    if (!clerkUserId) {
+      return 0; // User not authenticated, so no prompts.
+    }
+
+    if (!clerkUserId) {
+      return 0; // User not authenticated, so success rate is 0.
+    }
+
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
