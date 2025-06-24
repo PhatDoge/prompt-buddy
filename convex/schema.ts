@@ -32,6 +32,14 @@ const applicationTables = {
     category: v.string(),
     rating: v.optional(v.number()),
   }).index("by_user", ["userId"]),
+
+  favoritePrompts: defineTable({
+    userId: v.id("users"),
+    promptId: v.id("prompts"),
+  })
+    .index("by_user", ["userId"])
+    .index("by_prompt", ["promptId"])
+    .index("by_user_prompt", ["userId", "promptId"]),
 };
 
 export default defineSchema({

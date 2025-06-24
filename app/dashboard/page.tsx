@@ -1,13 +1,13 @@
 "use client";
+import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 // import { PromptHistory } from "@/components/PromptHistory"; // No longer directly used here
 import {
+  BarChart3,
   Brain,
   CheckCircle,
   MessageSquare,
-  BarChart3,
   PlusCircle,
   Users,
 } from "lucide-react"; // Added PlusCircle, Users

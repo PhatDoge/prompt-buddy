@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as auth from "../auth.js";
+import type * as favorites from "../favorites.js";
 import type * as http from "../http.js";
 import type * as prompts from "../prompts.js";
 import type * as users from "../users.js";
@@ -28,6 +29,7 @@ import type * as users from "../users.js";
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  favorites: typeof favorites;
   http: typeof http;
   prompts: typeof prompts;
   users: typeof users;
