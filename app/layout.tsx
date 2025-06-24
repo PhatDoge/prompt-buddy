@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "./globals.css"; // Correct: app/globals.css from app/layout.tsx
 import { ClerkProvider } from "@clerk/nextjs";
-import { ConvexClientProvider } from "./ConvexClientProvider";
+import { ConvexClientProvider } from "./ConvexClientProvider"; // Ensures this is ./
 import { UserSyncer } from "@/components/auth/UserSyncer";
 import { LanguageProvider } from "@/context/LanguageContext";
 

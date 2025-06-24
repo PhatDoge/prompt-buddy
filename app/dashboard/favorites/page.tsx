@@ -3,9 +3,8 @@
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Star } from "lucide-react";
-// Removed unused imports: Id, useMutation, Copy, Eye, Trash2, useState, toast
-// As CommunityPromptCard will handle its own interactions.
-import { CommunityPromptCard } from "@/components/CommunityPromptCard"; // Import the new card
+import { CommunityPromptCard } from "@/components/CommunityPromptCard";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Skeleton Card for loading state (can be shared or defined locally if not already)
 const SkeletonCard = () => (
@@ -24,9 +23,8 @@ const SkeletonCard = () => (
 );
 
 export default function FavoritesPage() {
+  const { translate } = useLanguage(); // Added
   const favoritePrompts = useQuery(api.favorites.getFavoritePrompts);
-  // removeFavorite mutation and selectedPrompt state are no longer needed here,
-  // as CommunityPromptCard handles its own favorite toggling.
 
   if (favoritePrompts === undefined) {
     // Loading state using SkeletonCards
@@ -38,22 +36,17 @@ export default function FavoritesPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-              Favorite Prompts
+              {translate("favoritesPageTitle")}
             </h1>
             <p className="text-md text-gray-600 dark:text-gray-400">
-              Your curated collection of most valuable prompts.
+              {translate("favoritesPageSubtitle")}
             </p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 3 }).map(
-            (
-              _,
-              index // Show 3 skeletons
-            ) => (
-              <SkeletonCard key={index} />
-            )
-          )}
+          {Array.from({ length: 3 }).map((_, index) => (
+            <SkeletonCard key={index} />
+          ))}
         </div>
       </div>
     );
@@ -67,10 +60,10 @@ export default function FavoritesPage() {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-            Favorite Prompts
+            {translate("favoritesPageTitle")}
           </h1>
           <p className="text-md text-gray-600 dark:text-gray-400">
-            Your curated collection of most valuable prompts.
+            {translate("favoritesPageSubtitle")}
           </p>
         </div>
       </div>
@@ -79,20 +72,18 @@ export default function FavoritesPage() {
         <div className="text-center py-12">
           <Star className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
-            No Favorites Yet
+            {translate("noFavoritesYetTitle")}
           </h2>
           <p className="text-gray-500 dark:text-gray-400">
-            Start adding prompts to your favorites to see them here!
+            {translate("noFavoritesYetSubtitle")}
           </p>
         </div>
       : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {favoritePrompts.map((prompt) => (
-            // The getFavoritePrompts query was updated to return all necessary fields for CommunityPromptCard
             <CommunityPromptCard key={prompt._id} prompt={prompt} />
           ))}
         </div>
       }
-      {/* selectedPrompt modal is removed as CommunityPromptCard handles interactions */}
     </div>
   );
 }

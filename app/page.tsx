@@ -13,14 +13,14 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import {
-  APP_CONFIG,
-  UI_TEXT,
-  FEATURES,
+  APP_CONFIG, // Keep for non-text config like currentYear if needed elsewhere
+  FEATURES, // Keep for structure, icon, color; title and desc will be translated
   STYLES,
   LAYOUT,
   ROUTES,
 } from "../constants"; // Adjust path as needed
-import LanguageToggleButton from "@/components/LanguageToggleButton";
+import LanguageToggleButton from "@/components/LanguageToggleButton"; // Added import
+import { useLanguage } from "@/context/LanguageContext";
 
 // Icon mapping for dynamic rendering
 const ICON_MAP = {
@@ -31,6 +31,8 @@ const ICON_MAP = {
 
 // Landing page component for signed-out users
 function LandingPage() {
+  const { translate } = useLanguage();
+
   return (
     <div
       className={`min-h-screen flex flex-col ${STYLES.gradients.background}`}
@@ -60,16 +62,16 @@ function LandingPage() {
               <h2
                 className={`text-xl font-bold ${STYLES.gradients.titleGradient}`}
               >
-                {APP_CONFIG.name}
+                {translate("appConfigName")}
               </h2>
               <p className="text-xs text-gray-500 -mt-1">
-                {APP_CONFIG.tagline}
+                {translate("appConfigTagline")}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-100/80 px-4 py-2 rounded-lg shadow-inner">
             <User className={`${LAYOUT.iconSizes.small} text-gray-500`} />
-            {UI_TEXT.header.signInPrompt}
+            {translate("headerSignInPrompt")}
           </div>
         </div>
       </header>
@@ -96,23 +98,24 @@ function LandingPage() {
           <h1
             className={`text-5xl md:text-6xl font-extrabold ${STYLES.gradients.heroTitleGradient} mb-8 leading-tight`}
           >
-            {UI_TEXT.hero.title}
+            {translate("heroTitle")}
             <span className="block text-3xl md:text-4xl text-gray-600 mt-2">
-              {UI_TEXT.hero.subtitle}
+              {translate("heroSubtitle")}
             </span>
           </h1>
 
           <p className="text-xl text-gray-700 mb-10 leading-relaxed max-w-2xl mx-auto">
-            {UI_TEXT.hero.description}
+            {translate("heroDescription")}
           </p>
 
           <div className="grid md:grid-cols-3 gap-6 mb-12 text-left">
-            {FEATURES.map((feature) => {
+            {FEATURES.map((feature, index) => {
+              // Added index for unique keys
               const IconComponent =
                 ICON_MAP[feature.icon as keyof typeof ICON_MAP];
               return (
                 <div
-                  key={feature.title}
+                  key={feature.icon} // Assuming icon is unique, or use index if titles can repeat
                   className={`${STYLES.backdrop.card} rounded-xl p-6 ${STYLES.shadows.lg} border border-gray-200/60 hover:${STYLES.shadows.xl} transition-shadow duration-300 hover:border-${feature.color}-300`}
                 >
                   <div
@@ -125,9 +128,11 @@ function LandingPage() {
                   <h3
                     className={`font-semibold text-gray-900 mb-2 text-lg text-${feature.color}-700`}
                   >
-                    {feature.title}
+                    {translate(`feature${index}Title` as any)}
                   </h3>
-                  <p className="text-sm text-gray-600">{feature.desc}</p>
+                  <p className="text-sm text-gray-600">
+                    {translate(`feature${index}Desc` as any)}
+                  </p>
                 </div>
               );
             })}
@@ -137,16 +142,18 @@ function LandingPage() {
             className={`${STYLES.backdrop.signInCard} rounded-2xl ${STYLES.shadows["2xl"]} border border-gray-200/50 p-8 md:p-10 max-w-md mx-auto`}
           >
             <h3 className="text-2xl font-semibold text-gray-800 mb-6">
-              {UI_TEXT.signIn.title}
+              {translate("signInTitle")}
             </h3>
             <SignInForm />
           </div>
 
-          <p className="mt-12 text-sm text-gray-500">{UI_TEXT.signIn.footer}</p>
+          <p className="mt-12 text-sm text-gray-500">
+            {translate("signInFooter")}
+          </p>
         </div>
       </main>
       <footer className="py-6 text-center">
-        <p className="text-sm text-gray-600">{UI_TEXT.footer.copyright}</p>
+        <p className="text-sm text-gray-600">{translate("footerCopyright")}</p>
       </footer>
     </div>
   );
@@ -156,6 +163,7 @@ function LandingPage() {
 export default function App() {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
+  const { translate } = useLanguage(); // Added useLanguage
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
@@ -177,7 +185,7 @@ export default function App() {
           />
         </div>
         <p className={`text-gray-700 mt-4 text-lg ${STYLES.animations.pulse}`}>
-          {UI_TEXT.loading.experience}
+          {translate("loadingExperience")}
         </p>
       </div>
     );
@@ -199,7 +207,7 @@ export default function App() {
           />
         </div>
         <p className="text-gray-700 mt-4 text-lg">
-          {UI_TEXT.loading.redirecting}
+          {translate("loadingRedirecting")}
         </p>
       </div>
     );

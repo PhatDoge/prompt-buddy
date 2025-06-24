@@ -1,8 +1,8 @@
 "use client";
+import { useLanguage } from "@/context/LanguageContext";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
-// import { PromptHistory } from "@/components/PromptHistory"; // No longer directly used here
 import {
   BarChart3,
   Brain,
@@ -10,11 +10,12 @@ import {
   MessageSquare,
   PlusCircle,
   Users,
-} from "lucide-react"; // Added PlusCircle, Users
-import Link from "next/link"; // Added Link for Quick Actions
+} from "lucide-react";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { user, isSignedIn } = useUser();
+  const { translate } = useLanguage(); // Added
 
   const totalPrompts = useQuery(
     api.prompts.getTotalPromptsCreated,
@@ -27,34 +28,21 @@ export default function DashboardPage() {
     { enabled: !!isSignedIn }
   );
 
-  // A mock stat, replace with real data if available
-  // const averageRating = useQuery(
-  //   api.prompts.getAveragePromptRating, // Assuming this query exists or will be created
-  //   {},
-  //   { enabled: !!isSignedIn }
-  // ) ?? 0;
-
   const stats = [
     {
-      name: "Total Prompts Created",
+      nameKey: "statTotalPrompts" as const, // Use key for translation
       value: totalPrompts === undefined ? "..." : totalPrompts,
       icon: MessageSquare,
       color: "blue",
     },
     {
-      name: "Success Rate",
+      nameKey: "statSuccessRate" as const, // Use key for translation
       value: successRate === undefined ? "..." : `${successRate}%`,
       icon: CheckCircle,
       color: "green",
     },
-    // {
-    //   name: "Average Rating",
-    //   value: averageRating === undefined ? "..." : `${averageRating.toFixed(1)}/5`,
-    //   icon: Percent, // Using Percent as a placeholder, consider a Star icon
-    //   color: "yellow",
-    // },
     {
-      name: "Prompts This Month",
+      nameKey: "statPromptsThisMonth" as const, // Use key for translation
       value: "...", // Placeholder
       icon: BarChart3,
       color: "indigo",
@@ -67,15 +55,16 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              Welcome back,{" "}
+              {translate("dashboardWelcome")}{" "}
               <span className="text-blue-600">
                 {user?.firstName ||
                   user?.emailAddresses[0]?.emailAddress?.split("@")[0]}
               </span>
-              !<span className="text-indigo-600"> 👋</span>
+              {translate("dashboardWelcomeExclamation")}
+              <span className="text-indigo-600"> 👋</span>
             </h1>
             <p className="text-lg text-gray-600 mt-1">
-              Heres an overview of your AI Prompt Studio activity.
+              {translate("dashboardOverview")}
             </p>
           </div>
           <div className="hidden sm:block">
@@ -90,12 +79,12 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
           <div
-            key={stat.name}
+            key={stat.nameKey} // Use nameKey as key
             className={`bg-white shadow-lg rounded-xl p-6 border border-gray-200/80 hover:shadow-xl transition-shadow duration-300 flex items-start justify-between`}
           >
             <div>
               <p className={`text-sm font-medium text-gray-500 mb-1`}>
-                {stat.name}
+                {translate(stat.nameKey)}
               </p>
               <p className={`text-3xl font-bold text-${stat.color}-600`}>
                 {stat.value}
@@ -110,16 +99,11 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Prompt History Section - REMOVED */}
-      {/* <div className="bg-white shadow-lg rounded-xl p-6 md:p-8 border border-gray-200/80">
-        <PromptHistory />
-      </div> */}
-
       {/* Quick Actions or Tips (Optional) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white shadow-lg rounded-xl p-6 border border-gray-200/80">
           <h3 className="text-xl font-semibold text-gray-800 mb-3">
-            Quick Actions
+            {translate("quickActionsTitle")}
           </h3>
           <div className="space-y-3">
             <Link
@@ -127,26 +111,22 @@ export default function DashboardPage() {
               className="flex items-center gap-2 w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors font-medium"
             >
               <PlusCircle className="w-5 h-5" />
-              Create a New Prompt
+              {translate("quickActionCreatePrompt")}
             </Link>
             <Link
               href="/dashboard/community"
               className="flex items-center gap-2 w-full text-left px-4 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition-colors font-medium"
             >
               <Users className="w-5 h-5" />
-              Explore Community Prompts
+              {translate("quickActionExploreCommunity")}
             </Link>
           </div>
         </div>
         <div className="bg-white shadow-lg rounded-xl p-6 border border-gray-200/80">
           <h3 className="text-xl font-semibold text-gray-800 mb-3">
-            💡 Pro Tip
+            {translate("proTipTitle")}
           </h3>
-          <p className="text-gray-600">
-            Use detailed context and clear examples in your prompts for the best
-            AI responses. Experiment with different tones and formats! Remember
-            to check your prompt history for inspiration.
-          </p>
+          <p className="text-gray-600">{translate("proTipDescription")}</p>
         </div>
       </div>
     </div>

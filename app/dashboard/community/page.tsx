@@ -1,20 +1,20 @@
 "use client";
 
 import { CommunityPromptCard } from "@/components/CommunityPromptCard"; // Updated import
+import { useLanguage } from "@/context/LanguageContext";
 // import { Button } from "@/components/ui/button"; // Replaced with basic HTML button below
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Replaced
 // import { Skeleton } from "@/components/ui/skeleton"; // Replaced
 import { api } from "@/convex/_generated/api";
 import { usePaginatedQuery } from "convex/react";
 import {
-  Users,
+  ArrowDownUp,
+  ListFilter,
   MessageSquareText,
   Search,
-  ListFilter,
-  ArrowDownUp,
+  Users,
 } from "lucide-react";
-import { useState, useEffect, ChangeEvent } from "react"; // Added ChangeEvent
-import { toast } from "sonner";
+import { ChangeEvent, useState } from "react";
 
 // Basic Button component (if not already in PromptCard or a shared util)
 const Button = ({
@@ -112,8 +112,8 @@ const PROMPT_CATEGORIES = [
 ];
 
 export default function CommunityPage() {
+  const { translate } = useLanguage(); // Added
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  // Updated sortBy state and default to include 'rating'
   const [sortBy, setSortBy] = useState<"popularity" | "latest" | "rating">(
     "latest"
   );
@@ -131,8 +131,17 @@ export default function CommunityPage() {
   const isLoading = status === "loadingFirstPage";
   const isLoadingMore = status === "loadingMore";
 
-  // The publish functionality would ideally be on a user's "My Prompts" page
-  // For now, this page focuses on discovering community prompts.
+  const categoryDisplay = (categoryValue: string) => {
+    if (categoryValue === "all") return translate("categoryAll");
+    if (categoryValue === "creative writing")
+      return translate("categoryCreativeWriting");
+    // Simple capitalize for others if no specific translation key exists, or map them all
+    return (
+      translate(
+        `category${categoryValue.charAt(0).toUpperCase() + categoryValue.slice(1).replace(/\s+/g, "")}` as any
+      ) || categoryValue.charAt(0).toUpperCase() + categoryValue.slice(1)
+    );
+  };
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -141,11 +150,10 @@ export default function CommunityPage() {
           <Users className="w-8 h-8 text-white" />
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-3">
-          Community Prompts
+          {translate("communityPromptsTitle")}
         </h1>
         <p className="text-md md:text-lg text-gray-600 max-w-2xl mx-auto">
-          Discover, share, and learn from a growing library of AI prompts
-          crafted by the community.
+          {translate("communityPromptsSubtitle")}
         </p>
       </header>
 
@@ -158,7 +166,7 @@ export default function CommunityPage() {
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               <ListFilter className="inline-block w-4 h-4 mr-1" />
-              Filter by Category
+              {translate("filterByCategoryLabel")}
             </label>
             <Select
               id="category-select"
@@ -167,8 +175,7 @@ export default function CommunityPage() {
             >
               {PROMPT_CATEGORIES.map((category) => (
                 <SelectItem key={category} value={category}>
-                  {/* Removed the span wrapper and applied capitalize directly to the text */}
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                  {categoryDisplay(category)}
                 </SelectItem>
               ))}
             </Select>
@@ -179,7 +186,7 @@ export default function CommunityPage() {
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               <ArrowDownUp className="inline-block w-4 h-4 mr-1" />
-              Sort By
+              {translate("sortByLabel")}
             </label>
             <Select
               id="sort-select"
@@ -188,9 +195,15 @@ export default function CommunityPage() {
                 setSortBy(value as "popularity" | "latest" | "rating")
               }
             >
-              <SelectItem value="latest">Latest</SelectItem>
-              <SelectItem value="popularity">Popularity</SelectItem>
-              <SelectItem value="rating">Rating</SelectItem>
+              <SelectItem value="latest">
+                {translate("sortOptLatest")}
+              </SelectItem>
+              <SelectItem value="popularity">
+                {translate("sortOptPopularity")}
+              </SelectItem>
+              <SelectItem value="rating">
+                {translate("sortOptRating")}
+              </SelectItem>
             </Select>
           </div>
         </div>
@@ -209,11 +222,10 @@ export default function CommunityPage() {
         <div className="text-center py-12">
           <Search className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-xl font-semibold text-gray-700">
-            No Prompts Found
+            {translate("noPromptsFoundTitle")}
           </h3>
           <p className="text-gray-500 mt-1">
-            Try adjusting your filters or check back later as the community
-            grows!
+            {translate("noPromptsFoundSubtitle")}
           </p>
         </div>
       )}
@@ -221,8 +233,6 @@ export default function CommunityPage() {
       {!isLoading && prompts.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {prompts.map((prompt) => (
-            // Use CommunityPromptCard and ensure the prompt type matches.
-            // The `getCommunityPrompts` query was updated to return the necessary fields.
             <CommunityPromptCard key={prompt._id} prompt={prompt} />
           ))}
         </div>
@@ -232,7 +242,9 @@ export default function CommunityPage() {
       {status === "canLoadMore" && (
         <div className="mt-10 text-center">
           <Button onClick={() => loadMore(6)} disabled={isLoadingMore}>
-            {isLoadingMore ? "Loading..." : "Load More Prompts"}
+            {isLoadingMore ?
+              translate("loadingButtonText")
+            : translate("loadMoreButtonText")}
           </Button>
         </div>
       )}
@@ -243,19 +255,13 @@ export default function CommunityPage() {
           <MessageSquareText className="w-6 h-6 text-teal-500" />
         </div>
         <h2 className="text-2xl font-semibold text-gray-800 mb-3">
-          Share Your Genius
+          {translate("ctaShareTitle")}
         </h2>
         <p className="text-gray-600 mb-6 max-w-md mx-auto">
-          Have a great prompt? Publish it from your dashboard to contribute to
-          the community and help others learn.
+          {translate("ctaShareSubtitle")}
         </p>
-        {/* Link to create prompt page or user's prompts page */}
-        {/* <Button asChild variant="default" size="lg">
-          <Link href="/dashboard/create-prompt">Create a New Prompt</Link>
-        </Button> */}
         <p className="text-sm text-gray-500 mt-4">
-          (Publishing functionality is typically managed from your list of
-          created prompts)
+          {translate("ctaShareFootnote")}
         </p>
       </div>
     </div>

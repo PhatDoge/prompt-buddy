@@ -1,53 +1,55 @@
 // App Constants
 export const APP_CONFIG = {
-  name: "AI Prompt Studio",
-  tagline: "Powered by Intelligence",
-  currentYear: new Date().getFullYear(),
+  // name: "AI Prompt Studio", // Translated
+  // tagline: "Powered by Intelligence", // Translated
+  currentYear: new Date().getFullYear(), // Keep non-text constants
 };
 
 // UI Text Constants
+// These texts are now handled by the translation system (utils/translate.ts)
+// This object is kept for structural integrity if imported elsewhere, but text values are removed.
 export const UI_TEXT = {
   header: {
-    signInPrompt: "Sign in to access your dashboard",
+    // signInPrompt: "Sign in to access your dashboard", // Translated
   },
   hero: {
-    title: "Craft Perfect AI Prompts",
-    subtitle: "Effortlessly.",
-    description:
-      "Unlock the full potential of AI with our intuitive Prompt Studio. Generate precise, effective prompts for any application and turn your ideas into intelligent conversations.",
+    // title: "Craft Perfect AI Prompts", // Translated
+    // subtitle: "Effortlessly.", // Translated
+    // description: "...", // Translated
   },
   signIn: {
-    title: "Get Started Now",
-    footer:
-      "Already have an account? Signing in will redirect you to your dashboard.",
+    // title: "Get Started Now", // Translated
+    // footer: "...", // Translated
   },
   loading: {
-    experience: "Loading Your Experience...",
-    redirecting: "Redirecting to your dashboard...",
+    // experience: "Loading Your Experience...", // Translated
+    // redirecting: "Redirecting to your dashboard...", // Translated
   },
   footer: {
-    copyright: `© ${new Date().getFullYear()} AI Prompt Studio. All rights reserved.`,
+    // copyright: `© ${new Date().getFullYear()} AI Prompt Studio. All rights reserved.`, // Translated
   },
 };
 
 // Feature Cards Data
+// Titles and descriptions are now handled by the translation system.
+// Kept for icons and colors.
 export const FEATURES = [
   {
     icon: "Zap",
-    title: "Lightning Fast",
-    desc: "Generate optimized prompts in seconds.",
+    // title: "Lightning Fast", // Translated as feature0Title
+    // desc: "Generate optimized prompts in seconds.", // Translated as feature0Desc
     color: "blue",
   },
   {
     icon: "Brain",
-    title: "AI-Powered",
-    desc: "Smart suggestions and improvements.",
+    // title: "AI-Powered", // Translated as feature1Title
+    // desc: "Smart suggestions and improvements.", // Translated as feature1Desc
     color: "indigo",
   },
   {
     icon: "Rocket",
-    title: "Production Ready",
-    desc: "Built for scale and reliability.",
+    // title: "Production Ready", // Translated as feature2Title
+    // desc: "Built for scale and reliability.", // Translated as feature2Desc
     color: "purple",
   },
 ];
