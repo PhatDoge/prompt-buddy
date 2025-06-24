@@ -3,20 +3,20 @@
 
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useUser } from "@clerk/nextjs"; // For getting current user details
 import { useMutation, useQuery } from "convex/react";
 import {
-  Heart,
-  MessageCircle,
-  Star,
-  Trash2,
-  SendHorizonal,
   ChevronDown,
   ChevronUp,
+  Heart,
+  MessageCircle,
+  SendHorizonal,
+  Star,
+  Trash2,
 } from "lucide-react";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useUser } from "@clerk/nextjs"; // For getting current user details
 
 // Basic Button component (can be replaced with a UI library button if available)
 const Button = ({

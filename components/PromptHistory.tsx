@@ -1,9 +1,9 @@
-import { useQuery, useMutation } from "convex/react";
-import { toast } from "sonner";
-import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { Share2Icon, GlobeIcon, XCircleIcon } from "lucide-react"; // Assuming lucide-react for icons
+import { useMutation, useQuery } from "convex/react";
+import { GlobeIcon, XCircleIcon } from "lucide-react"; // Assuming lucide-react for icons
+import { useState } from "react";
+import { toast } from "sonner";
 
 export function PromptHistory() {
   const prompts = useQuery(api.prompts.getUserPrompts) || [];
