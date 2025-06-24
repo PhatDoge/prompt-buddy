@@ -44,6 +44,16 @@ export const addFavoritePrompt = mutation({
       userId: user._id,
       promptId: args.promptId,
     });
+
+    // Increment popularity
+    const prompt = await ctx.db.get(args.promptId);
+    if (prompt) {
+      await ctx.db.patch(args.promptId, {
+        popularity: (prompt.popularity || 0) + 1,
+      });
+    }
+
+    return favoriteId;
   },
 });
 
@@ -78,6 +88,18 @@ export const removeFavoritePrompt = mutation({
     }
 
     await ctx.db.delete(favoriteToRemove._id);
+
+    // Decrement popularity
+    const prompt = await ctx.db.get(args.promptId);
+    if (
+      prompt &&
+      typeof prompt.popularity === "number" &&
+      prompt.popularity > 0
+    ) {
+      await ctx.db.patch(args.promptId, { popularity: prompt.popularity - 1 });
+    } else if (prompt) {
+      await ctx.db.patch(args.promptId, { popularity: 0 }); // Ensure it doesn't go below 0
+    }
   },
 });
 

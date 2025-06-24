@@ -120,6 +120,111 @@ Create a comprehensive, production-ready prompt that incorporates all these elem
   },
 });
 
+export const publishPrompt = mutation({
+  args: { promptId: v.id("prompts") },
+  handler: async (ctx, args) => {
+    const clerkUserId = await getCurrentUserId(ctx);
+    if (!clerkUserId) {
+      throw new Error("User must be authenticated to publish a prompt.");
+    }
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+    if (!user) {
+      throw new Error("User not found.");
+    }
+
+    const prompt = await ctx.db.get(args.promptId);
+    if (!prompt) {
+      throw new Error("Prompt not found.");
+    }
+    if (prompt.userId !== user._id) {
+      throw new Error("User is not the owner of the prompt.");
+    }
+
+    await ctx.db.patch(args.promptId, { isPublic: true });
+  },
+});
+
+export const getCommunityPrompts = query({
+  args: {
+    category: v.optional(v.string()),
+    sortBy: v.optional(v.union(v.literal("popularity"), v.literal("latest"))),
+    paginationOpts: v.optional(v.any()), // For pagination
+  },
+  handler: async (ctx, args) => {
+    let queryBuilder = ctx.db
+      .query("prompts")
+      .filter((q) => q.eq(q.field("isPublic"), true));
+
+    if (args.category && args.category !== "all") {
+      queryBuilder = queryBuilder.filter((q) =>
+        q.eq(q.field("category"), args.category)
+      );
+    }
+
+    if (args.sortBy === "popularity") {
+      queryBuilder = queryBuilder.order("desc", "popularity");
+    } else {
+      // Default to sorting by latest (creation time)
+      queryBuilder = queryBuilder.order("desc"); // Orders by _creationTime descending
+    }
+
+    const prompts = await queryBuilder.paginate(args.paginationOpts);
+
+    const clerkUserId = await getCurrentUserId(ctx);
+    let userFavorites: any[] = [];
+    if (clerkUserId) {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+        .unique();
+      if (user) {
+        userFavorites = await ctx.db
+          .query("favoritePrompts")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect();
+      }
+    }
+
+    const promptsWithDetails = {
+      ...prompts,
+      page: prompts.page.map((prompt) => {
+        const userFavorite = userFavorites.find(
+          (fav) => fav.promptId === prompt._id
+        );
+        return {
+          ...prompt,
+          author: ctx.db
+            .get(prompt.userId)
+            .then((u) =>
+              u ?
+                {
+                  firstName: u.firstName,
+                  lastName: u.lastName,
+                  imageUrl: u.imageUrl,
+                }
+              : null
+            ), // Fetch author details
+          isFavorite: !!userFavorite,
+          favoriteId: userFavorite?._id,
+        };
+      }),
+    };
+
+    // Resolve author promises
+    const resolvedPromptsPage = await Promise.all(
+      promptsWithDetails.page.map(async (prompt) => {
+        const authorDetails = await prompt.author;
+        return { ...prompt, author: authorDetails };
+      })
+    );
+
+    return { ...promptsWithDetails, page: resolvedPromptsPage };
+  },
+});
+
 export const savePrompt = mutation({
   args: {
     title: v.string(),
@@ -163,6 +268,8 @@ export const savePrompt = mutation({
       userInput: args.userInput,
       generatedPrompt: args.generatedPrompt,
       category: args.category,
+      isPublic: false, // Default to not public
+      popularity: 0, // Default popularity
     });
   },
 });

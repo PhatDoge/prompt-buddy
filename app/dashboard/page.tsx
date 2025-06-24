@@ -72,7 +72,7 @@ export default function DashboardPage() {
                 {user?.firstName ||
                   user?.emailAddresses[0]?.emailAddress?.split("@")[0]}
               </span>
-              ! 👋
+              !<span className="text-indigo-600"> 👋</span>
             </h1>
             <p className="text-lg text-gray-600 mt-1">
               Heres an overview of your AI Prompt Studio activity.

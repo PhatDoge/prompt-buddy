@@ -31,7 +31,11 @@ const applicationTables = {
     generatedPrompt: v.string(),
     category: v.string(),
     rating: v.optional(v.number()),
-  }).index("by_user", ["userId"]),
+    isPublic: v.optional(v.boolean()), // Added for community sharing
+    popularity: v.optional(v.number()), // Added for sorting by popularity
+  })
+    .index("by_user", ["userId"])
+    .index("by_public_popularity", ["isPublic", "popularity"]), // Index for querying public prompts by popularity
 
   favoritePrompts: defineTable({
     userId: v.id("users"),
