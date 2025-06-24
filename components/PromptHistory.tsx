@@ -3,11 +3,15 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { Share2Icon, GlobeIcon, XCircleIcon } from "lucide-react"; // Assuming lucide-react for icons
 
 export function PromptHistory() {
   const prompts = useQuery(api.prompts.getUserPrompts) || [];
   const deletePrompt = useMutation(api.prompts.deletePrompt);
-  const ratePrompt = useMutation(api.prompts.ratePrompt);
+  // Updated to use the new rating system
+  const addOrUpdateRatingMutation = useMutation(api.prompts.addOrUpdateRating);
+  const sharePromptMutation = useMutation(api.prompts.sharePrompt);
+  const unsharePromptMutation = useMutation(api.prompts.unsharePrompt);
   const [expandedPrompt, setExpandedPrompt] = useState<string | null>(null);
 
   const handleDelete = async (promptId: Id<"prompts">) => {
@@ -23,10 +27,32 @@ export function PromptHistory() {
 
   const handleRate = async (promptId: Id<"prompts">, rating: number) => {
     try {
-      await ratePrompt({ promptId, rating });
+      // Using the new mutation that interacts with the 'ratings' table
+      await addOrUpdateRatingMutation({ promptId, rating });
       toast.success("Rating saved");
-    } catch (error) {
-      toast.error("Failed to save rating");
+      // Note: The UI for displaying this rating might need to be updated if it relied on prompt.rating directly
+      // and now needs to fetch from the 'ratings' table or use an aggregated value.
+      // For PromptHistory, this rating is specific to the user's interaction with their own prompt.
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save rating");
+    }
+  };
+
+  const handleToggleShare = async (
+    promptId: Id<"prompts">,
+    isPublic: boolean
+  ) => {
+    const action = isPublic ? "Unshare" : "Share";
+    try {
+      if (isPublic) {
+        await unsharePromptMutation({ promptId });
+        toast.success(`Prompt ${action.toLowerCase()}d successfully`);
+      } else {
+        await sharePromptMutation({ promptId });
+        toast.success(`Prompt ${action.toLowerCase()}d successfully`);
+      }
+    } catch (error: any) {
+      toast.error(error.message || `Failed to ${action.toLowerCase()} prompt`);
     }
   };
 
@@ -109,6 +135,25 @@ export function PromptHistory() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() =>
+                      handleToggleShare(prompt._id, !!prompt.isPublic)
+                    }
+                    className={`p-2 transition-colors ${
+                      prompt.isPublic ?
+                        "text-red-500 hover:text-red-700" // Icon indicates action: XCircle to unshare
+                      : "text-green-500 hover:text-green-700" // Icon indicates action: Globe to share
+                    }`}
+                    title={
+                      prompt.isPublic ?
+                        "Unshare from Community"
+                      : "Share to Community"
+                    }
+                  >
+                    {prompt.isPublic ?
+                      <XCircleIcon className="w-5 h-5" />
+                    : <GlobeIcon className="w-5 h-5" />}
+                  </button>
+                  <button
                     onClick={() => copyToClipboard(prompt.generatedPrompt)}
                     className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                     title="Copy prompt"
@@ -165,7 +210,8 @@ export function PromptHistory() {
                       key={star}
                       onClick={() => handleRate(prompt._id, star)}
                       className={`w-5 h-5 ${
-                        (prompt.rating || 0) >= star ?
+                        // Use currentUserRating from the modified getUserPrompts
+                        (prompt.currentUserRating || 0) >= star ?
                           "text-yellow-400"
                         : "text-gray-300"
                       } hover:text-yellow-400 transition-colors`}

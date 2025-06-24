@@ -37,23 +37,33 @@ export const addFavoritePrompt = mutation({
 
     if (existingFavorite) {
       // Prompt is already a favorite, maybe return a message or the existing favorite ID
-      return existingFavorite._id;
+      // console.log("Prompt already favorited");
+      return { favoriteId: existingFavorite._id, status: "already_favorited" };
     }
 
-    return await ctx.db.insert("favoritePrompts", {
+    // Check if the prompt to be favorited is public
+    const promptToFavorite = await ctx.db.get(args.promptId);
+    if (!promptToFavorite) {
+      throw new Error("Prompt not found.");
+    }
+    if (!promptToFavorite.isPublic) {
+      throw new Error("Cannot favorite a private prompt.");
+    }
+
+    const newFavoriteId = await ctx.db.insert("favoritePrompts", {
       userId: user._id,
       promptId: args.promptId,
     });
 
     // Increment popularity
-    const prompt = await ctx.db.get(args.promptId);
-    if (prompt) {
+    if (promptToFavorite) {
+      // promptToFavorite is already fetched and checked
       await ctx.db.patch(args.promptId, {
-        popularity: (prompt.popularity || 0) + 1,
+        popularity: (promptToFavorite.popularity || 0) + 1,
       });
     }
 
-    return favoriteId;
+    return { favoriteId: newFavoriteId, status: "added" };
   },
 });
 
@@ -137,20 +147,72 @@ export const getFavoritePrompts = query({
     // A more optimized approach for larger datasets might involve multiple queries or a different data model.
     // However, let's try to fetch them efficiently.
 
-    const prompts = [];
-    for (const id of promptIds) {
-      const prompt = await ctx.db.get(id);
-      if (prompt) {
-        // Add a flag to indicate if the prompt is a favorite
-        prompts.push({
+    const detailedPrompts = await Promise.all(
+      promptIds.map(async (id) => {
+        const prompt = await ctx.db.get(id);
+        if (!prompt) return null; // Prompt might have been deleted
+
+        // Similar enrichment as in getCommunityPrompts
+        const author = await ctx.db.get(prompt.userId);
+
+        const promptRatings = await ctx.db
+          .query("ratings")
+          .withIndex("by_prompt", (q) => q.eq("promptId", prompt._id))
+          .collect();
+
+        let averageRating = 0;
+        const totalRatings = promptRatings.length;
+        if (totalRatings > 0) {
+          averageRating =
+            promptRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings;
+        }
+
+        let currentUserRatingObj = null;
+        if (user) {
+          // user object is available here from the clerk user check
+          currentUserRatingObj = await ctx.db
+            .query("ratings")
+            .withIndex("by_prompt_user", (q) =>
+              q.eq("promptId", prompt._id).eq("userId", user._id)
+            )
+            .unique();
+        }
+
+        const commentsCount = (
+          await ctx.db
+            .query("comments")
+            .withIndex("by_prompt", (q) => q.eq("promptId", prompt._id))
+            .collect()
+        ).length;
+        const favoriteEntry = favoriteEntries.find(
+          (fav) => fav.promptId === id
+        );
+
+        return {
           ...prompt,
-          isFavorite: true,
-          favoriteEntryId: favoriteEntries.find((fav) => fav.promptId === id)
-            ?._id,
-        });
-      }
-    }
-    return prompts.sort((a, b) => b._creationTime - a._creationTime); // Sort by creation time, newest first
+          author:
+            author ?
+              {
+                firstName: author.firstName,
+                lastName: author.lastName,
+                imageUrl: author.imageUrl,
+              }
+            : null,
+          isFavorite: true, // By definition, these are favorited
+          favoriteId: favoriteEntry?._id, // Renamed from favoriteEntryId for consistency
+          averageRating: parseFloat(averageRating.toFixed(1)),
+          totalRatings: totalRatings,
+          currentUserRating:
+            currentUserRatingObj ? currentUserRatingObj.rating : null,
+          commentsCount: commentsCount,
+        };
+      })
+    );
+
+    // Filter out any nulls (e.g. if a prompt was deleted) and sort
+    return detailedPrompts
+      .filter((p) => p !== null)
+      .sort((a, b) => b!._creationTime - a!._creationTime);
   },
 });
 

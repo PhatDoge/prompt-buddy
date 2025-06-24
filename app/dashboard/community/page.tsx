@@ -1,6 +1,6 @@
 "use client";
 
-import { PromptCard } from "@/components/PromptCard";
+import { CommunityPromptCard } from "@/components/CommunityPromptCard"; // Updated import
 // import { Button } from "@/components/ui/button"; // Replaced with basic HTML button below
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Replaced
 // import { Skeleton } from "@/components/ui/skeleton"; // Replaced
@@ -113,7 +113,10 @@ const PROMPT_CATEGORIES = [
 
 export default function CommunityPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"popularity" | "latest">("latest");
+  // Updated sortBy state and default to include 'rating'
+  const [sortBy, setSortBy] = useState<"popularity" | "latest" | "rating">(
+    "latest"
+  );
 
   const {
     results: prompts,
@@ -182,11 +185,12 @@ export default function CommunityPage() {
               id="sort-select"
               value={sortBy}
               onValueChange={(value) =>
-                setSortBy(value as "popularity" | "latest")
+                setSortBy(value as "popularity" | "latest" | "rating")
               }
             >
               <SelectItem value="latest">Latest</SelectItem>
               <SelectItem value="popularity">Popularity</SelectItem>
+              <SelectItem value="rating">Rating</SelectItem>
             </Select>
           </div>
         </div>
@@ -217,7 +221,9 @@ export default function CommunityPage() {
       {!isLoading && prompts.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {prompts.map((prompt) => (
-            <PromptCard key={prompt._id} prompt={prompt as any} /> // Cast as any to match PromptCardProps, ensure backend sends correct shape
+            // Use CommunityPromptCard and ensure the prompt type matches.
+            // The `getCommunityPrompts` query was updated to return the necessary fields.
+            <CommunityPromptCard key={prompt._id} prompt={prompt} />
           ))}
         </div>
       )}
