@@ -20,6 +20,7 @@ import {
   LAYOUT,
   ROUTES,
 } from "../constants"; // Adjust path as needed
+import LanguageToggleButton from "@/components/LanguageToggleButton";
 
 // Icon mapping for dynamic rendering
 const ICON_MAP = {
@@ -47,6 +48,7 @@ function LandingPage() {
           className={`${LAYOUT.maxWidth} mx-auto px-4 sm:px-6 lg:px-8 ${LAYOUT.headerHeight} flex justify-between items-center`}
         >
           <div className="flex items-center gap-3">
+            <LanguageToggleButton /> {/* Added LanguageToggleButton */}
             <div
               className={`relative ${LAYOUT.logoSize} ${STYLES.gradients.logoBackground} rounded-xl flex items-center justify-center ${STYLES.shadows.lg}`}
             >
@@ -106,7 +108,8 @@ function LandingPage() {
 
           <div className="grid md:grid-cols-3 gap-6 mb-12 text-left">
             {FEATURES.map((feature) => {
-              const IconComponent = ICON_MAP[feature.icon];
+              const IconComponent =
+                ICON_MAP[feature.icon as keyof typeof ICON_MAP];
               return (
                 <div
                   key={feature.title}

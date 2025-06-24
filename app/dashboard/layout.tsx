@@ -1,6 +1,7 @@
+import LanguageToggleButton from "@/components/LanguageToggleButton";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { SignOutButton, SignedIn, useUser } from "@clerk/nextjs";
-import { LogOut, UserCircle } from "lucide-react";
+import { SignOutButton, SignedIn } from "@clerk/nextjs";
+import { LogOut } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -14,7 +15,10 @@ export default function DashboardLayout({
         {" "}
         {/* Adjust ml-64 to match sidebar width */}
         <header className="bg-white shadow-sm p-4 border-b border-gray-200">
-          <div className="flex justify-end items-center">
+          <div className="flex justify-between items-center">
+            {" "}
+            {/* Changed justify-end to justify-between */}
+            <LanguageToggleButton /> {/* Added LanguageToggleButton */}
             <SignedIn>
               <div className="flex items-center gap-3">
                 {/* <UserNav /> component could go here if we make one */}
