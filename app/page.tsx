@@ -1,5 +1,7 @@
 "use client";
 import { SignInForm } from "@/components/SignInForm";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { SignedIn, SignedOut, SignOutButton, useUser } from "@clerk/nextjs";
 import {
   Brain,
@@ -107,7 +109,20 @@ export default function App() {
 }
 
 function Content({ activeTab }: { activeTab: "generator" | "history" }) {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded, isSignedIn } = useUser();
+
+  // Call useQuery unconditionally, but control execution with the `enabled` option.
+  // Pass an empty object as args if the query takes no arguments.
+  const totalPrompts = useQuery(
+    api.prompts.getTotalPromptsCreated,
+    {}, // Arguments for the query (empty in this case)
+    { enabled: !!isSignedIn } // Options object with enabled flag
+  );
+  const successRate = useQuery(
+    api.prompts.getPromptSuccessRate,
+    {}, // Arguments for the query (empty in this case)
+    { enabled: !!isSignedIn } // Options object with enabled flag
+  );
 
   if (!isLoaded) {
     return (
@@ -225,12 +240,16 @@ function Content({ activeTab }: { activeTab: "generator" | "history" }) {
 
             {/* Quick stats */}
             <div className="hidden md:flex items-center gap-4">
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 shadow-md border border-gray-200/50">
-                <div className="text-2xl font-bold text-blue-600">24</div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 shadow-md border border-gray-200/50 min-w-[120px] text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {totalPrompts === undefined ? "..." : totalPrompts}
+                </div>
                 <div className="text-xs text-gray-500">Prompts Created</div>
               </div>
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 shadow-md border border-gray-200/50">
-                <div className="text-2xl font-bold text-green-600">98%</div>
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 shadow-md border border-gray-200/50 min-w-[120px] text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {successRate === undefined ? "..." : `${successRate}%`}
+                </div>
                 <div className="text-xs text-gray-500">Success Rate</div>
               </div>
             </div>

@@ -202,13 +202,77 @@ export const ratePrompt = mutation({
     rating: v.number(),
   },
   handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
+    const clerkUserId = await getCurrentUserId(ctx);
+
+    // Find the user document by Clerk ID to get the Convex user ID
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      throw new Error(
+        "User not found in Convex 'users' table. Please ensure storeUser has been called."
+      );
+    }
 
     const prompt = await ctx.db.get(args.promptId);
-    if (!prompt || prompt.userId !== userId) {
+    // Check if the prompt exists and if its userId matches the Convex user ID
+    if (!prompt || prompt.userId !== user._id) {
       throw new Error("Prompt not found or unauthorized");
     }
 
     await ctx.db.patch(args.promptId, { rating: args.rating });
+  },
+});
+
+export const getTotalPromptsCreated = query({
+  args: {},
+  handler: async (ctx) => {
+    const clerkUserId = await getCurrentUserId(ctx);
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      return 0; // Or throw error, depending on desired behavior for non-existent user
+    }
+
+    const prompts = await ctx.db
+      .query("prompts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    return prompts.length;
+  },
+});
+
+export const getPromptSuccessRate = query({
+  args: {},
+  handler: async (ctx) => {
+    const clerkUserId = await getCurrentUserId(ctx);
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUserId))
+      .unique();
+
+    if (!user) {
+      return 0; // Or handle as appropriate
+    }
+
+    const prompts = await ctx.db
+      .query("prompts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.neq(q.field("rating"), undefined)) // Only consider prompts that have been rated
+      .collect();
+
+    if (prompts.length === 0) {
+      return 0; // No rated prompts, so success rate is 0 or undefined based on preference
+    }
+
+    const successfulPrompts = prompts.filter(
+      (prompt) => prompt.rating !== undefined && prompt.rating >= 4
+    ).length;
+    return Math.round((successfulPrompts / prompts.length) * 100);
   },
 });
